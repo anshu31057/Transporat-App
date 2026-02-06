@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { navigationItems } from '../utils/constants';
+import { useAuth } from '../context/AuthContext';
 
 const getLinkClass = ({ isActive }) =>
   [
@@ -8,10 +9,13 @@ const getLinkClass = ({ isActive }) =>
   ].join(' ');
 
 const MobileNav = () => {
+  const { role } = useAuth();
+  const visibleItems = navigationItems.filter((item) => item.roles.includes(role));
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 border-t border-slate-200 bg-white p-3 sm:static sm:border-t-0 sm:bg-transparent sm:p-0">
       <div className="mx-auto grid max-w-4xl grid-cols-4 gap-2 px-1 sm:mt-6 sm:px-6">
-        {navigationItems.map((item) => (
+        {visibleItems.map((item) => (
           <NavLink key={item.to} to={item.to} className={getLinkClass}>
             <span>{item.label}</span>
           </NavLink>
