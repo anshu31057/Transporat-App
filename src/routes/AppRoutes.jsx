@@ -8,7 +8,7 @@ import EntryListPage from '../pages/EntryListPage';
 import EntryDetailPage from '../pages/EntryDetailPage';
 import SettingsPage from '../pages/SettingsPage';
 import LoginPage from '../pages/LoginPage';
-import ExportPage from '../pages/ExportPage';
+import ExportReportPage from '../pages/ExportReportPage';
 import EditEntryPage from '../pages/EditEntryPage';
 
 const AppRoutes = () => {
@@ -21,7 +21,9 @@ const AppRoutes = () => {
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="entries" element={<EntryListPage />} />
           <Route path="entries/:entryId" element={<EntryDetailPage />} />
-          <Route path="export" element={<ExportPage />} />
+          <Route element={<RoleBasedRoute allowedRoles={['owner']} redirectTo="/dashboard" />}>
+            <Route path="export" element={<ExportReportPage />} />
+          </Route>
           <Route element={<RoleBasedRoute allowedRoles={['admin']} redirectTo="/dashboard" />}>
             <Route path="new-entry" element={<NewEntryPage />} />
             <Route path="entries/edit/:entryId" element={<EditEntryPage />} />
