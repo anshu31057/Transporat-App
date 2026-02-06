@@ -23,3 +23,16 @@ Fields:
 - `notes` (string, optional)
 - `createdBy` (string) – `uid`
 - `timestamp` (timestamp) – `serverTimestamp()`
+
+## trucks
+**Document ID:** auto-generated
+
+Fields:
+- `truckNumber` (string)
+- `driverName` (string)
+- `driverContact` (string, optional)
+- `insuranceStartDate` (string, YYYY-MM-DD)
+- `insuranceExpiryDate` (string, YYYY-MM-DD)
+- `otherDocuments` (string, optional)
+- `createdAt` (timestamp)
+- `updatedAt` (timestamp)

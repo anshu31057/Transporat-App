@@ -5,6 +5,7 @@ import PageCard from '../components/PageCard';
 import { db } from '../firebase/firebase';
 import { useAuth } from '../context/AuthContext';
 import { formatDisplayDate } from '../utils/date';
+import { generateEntryPdf } from '../utils/pdf';
 
 const EntryDetailPage = () => {
   const { entryId } = useParams();
@@ -99,6 +100,13 @@ const EntryDetailPage = () => {
         >
           Back to Entries
         </Link>
+        <button
+          type="button"
+          onClick={() => generateEntryPdf(entry)}
+          className="flex h-12 items-center justify-center rounded-xl border border-emerald-700 text-base font-semibold text-emerald-700"
+        >
+          PDF
+        </button>
         {role === 'admin' ? (
           <Link
             to={`/entries/edit/${entry.id}`}

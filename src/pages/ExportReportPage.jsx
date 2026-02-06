@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { collection, getDocs, orderBy, query, where } from 'firebase/firestore';
-import { jsPDF } from 'jspdf';
 import * as XLSX from 'xlsx';
 import PageCard from '../components/PageCard';
 import { db } from '../firebase/firebase';
 import { getCurrentIsoDate } from '../utils/date';
+import { generateEntriesReportPdf } from '../utils/pdf';
 
 const ExportReportPage = () => {
   const [filters, setFilters] = useState({
@@ -41,30 +41,11 @@ const ExportReportPage = () => {
     setIsExporting(true);
     try {
       const entries = await fetchEntries();
-      const doc = new jsPDF();
-      const title = 'Transport Entry Report';
-      doc.setFontSize(16);
-      doc.text(title, 14, 18);
-      doc.setFontSize(11);
-      doc.text(`From: ${filters.fromDate || 'All'}  To: ${filters.toDate || 'All'}`, 14, 26);
-
-      let y = 36;
-      entries.forEach((entry, index) => {
-        const totalAmount = Number(entry.totalAmount ?? 0);
-        const advanceAmount = Number(entry.advance ?? entry.advanceAmount ?? 0);
-        const pendingAmount = Number(entry.pending ?? entry.balanceAmount ?? totalAmount - advanceAmount);
-        const line = `${index + 1}. ${entry.date || '-'} | ${entry.partyName || '-'} | ${
-          entry.vehicleNumber || '-'
-        } | Total ₹${totalAmount} | Pending ₹${pendingAmount}`;
-        doc.text(line, 14, y);
-        y += 8;
-        if (y > 270) {
-          doc.addPage();
-          y = 18;
-        }
+      generateEntriesReportPdf({
+        entries,
+        fromDate: filters.fromDate,
+        toDate: filters.toDate
       });
-
-      doc.save('transport-entry-report.pdf');
     } catch (error) {
       console.error('Failed to export PDF', error);
       alert('Unable to export PDF. Please try again.');

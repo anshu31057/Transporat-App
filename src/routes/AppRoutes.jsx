@@ -10,6 +10,8 @@ import SettingsPage from '../pages/SettingsPage';
 import LoginPage from '../pages/LoginPage';
 import ExportReportPage from '../pages/ExportReportPage';
 import EditEntryPage from '../pages/EditEntryPage';
+import TrucksPage from '../pages/TrucksPage';
+import TruckDetailPage from '../pages/TruckDetailPage';
 import { useAuth } from '../context/AuthContext';
 
 const DashboardRedirect = () => {
@@ -34,6 +36,10 @@ const AppRoutes = () => {
           </Route>
           <Route path="entries" element={<EntryListPage />} />
           <Route path="entries/:entryId" element={<EntryDetailPage />} />
+          <Route element={<RoleBasedRoute allowedRoles={['admin', 'owner']} redirectTo="/dashboard" />}>
+            <Route path="trucks" element={<TrucksPage />} />
+            <Route path="trucks/:truckId" element={<TruckDetailPage />} />
+          </Route>
           <Route element={<RoleBasedRoute allowedRoles={['owner']} redirectTo="/dashboard" />}>
             <Route path="export" element={<ExportReportPage />} />
           </Route>
