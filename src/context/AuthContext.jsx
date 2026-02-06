@@ -6,26 +6,10 @@ import {
   signInWithEmailAndPassword,
   signOut
 } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import { auth, db } from '../firebase/firebase';
+import { auth } from '../firebase/firebase';
+import { getUserRole } from '../utils/auth';
 
 const AuthContext = createContext(null);
-
-const getUserRole = async (userId) => {
-  console.log('[Auth][RoleFetch] Start role fetch.');
-  console.log(`[Auth][RoleFetch] Auth UID: ${userId}`);
-  console.log(`[Auth][RoleFetch] Fetching Firestore doc: users/${userId}`);
-  const userDoc = await getDoc(doc(db, 'users', userId));
-
-  if (!userDoc.exists()) {
-    console.log('[Auth][RoleFetch] Firestore doc not found. Defaulting role to owner.');
-    return 'owner';
-  }
-
-  const { role } = userDoc.data();
-  console.log(`[Auth][RoleFetch] Firestore role value: ${role}`);
-  return role === 'admin' ? 'admin' : 'owner';
-};
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -42,18 +26,14 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      console.log('[Auth][State] Auth state changed.');
-      console.log(`[Auth][State] Auth UID: ${currentUser?.uid ?? 'none'}`);
       setUser(currentUser);
 
       if (currentUser) {
         const fetchedRole = await getUserRole(currentUser.uid);
         if (isMounted) {
-          console.log(`[Auth][State] Resolved role: ${fetchedRole}`);
-          setRole(fetchedRole);
+          setRole(fetchedRole ?? 'owner');
         }
       } else {
-        console.log('[Auth][State] No authenticated user. Defaulting role to owner.');
         setRole('owner');
       }
 
@@ -66,11 +46,7 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  const login = (email, password) => {
-    console.log('[Auth][Login] Attempting login.');
-    console.log(`[Auth][Login] Email: ${email}`);
-    return signInWithEmailAndPassword(auth, email, password);
-  };
+  const login = (email, password) => signInWithEmailAndPassword(auth, email, password);
 
   const logout = () => signOut(auth);
 
