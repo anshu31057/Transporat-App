@@ -21,18 +21,22 @@ const ExportReportPage = () => {
           </label>
         </div>
 
+        <p className="rounded-lg bg-slate-100 p-3 text-sm text-slate-600">
+          Export Firestore entries for the selected date range.
+        </p>
+
         <div className="space-y-3">
           <button
             type="button"
             className="h-12 w-full rounded-lg bg-blue-700 text-lg font-semibold text-white"
           >
-            Export PDF
+            EXPORT PDF
           </button>
           <button
             type="button"
             className="h-12 w-full rounded-lg border border-blue-700 text-lg font-semibold text-blue-700"
           >
-            Export Excel
+            EXPORT EXCEL
           </button>
         </div>
       </div>
