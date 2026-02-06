@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getUserRole } from '../utils/auth';
 
 const LoginPage = () => {
   const { isReady, login, logout, role, user } = useAuth();
@@ -8,7 +9,7 @@ const LoginPage = () => {
   const [formData, setFormData] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
   const [selectedRole, setSelectedRole] = useState('');
-  const [pendingRoleCheck, setPendingRoleCheck] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
 
   const redirectPath = useMemo(() => {
     if (role === 'admin') {
@@ -18,25 +19,12 @@ const LoginPage = () => {
   }, [role]);
 
   useEffect(() => {
-    if (!isReady || !user) {
-      return;
-    }
-
-    if (pendingRoleCheck) {
-      if (selectedRole && selectedRole !== role) {
-        setError('You are not authorized for this login type');
-        setPendingRoleCheck(false);
-        logout();
-        return;
-      }
-
-      setPendingRoleCheck(false);
-      navigate(redirectPath, { replace: true });
+    if (!isReady || !user || isValidating) {
       return;
     }
 
     navigate(redirectPath, { replace: true });
-  }, [isReady, logout, navigate, pendingRoleCheck, redirectPath, role, selectedRole, user]);
+  }, [isReady, isValidating, navigate, redirectPath, user]);
 
   const onChange = (event) => {
     const { name, value } = event.target;
@@ -50,12 +38,23 @@ const LoginPage = () => {
       setError('Please choose Admin or Owner to continue.');
       return;
     }
-    setPendingRoleCheck(true);
     try {
-      await login(formData.username, formData.password);
+      setIsValidating(true);
+      const credential = await login(formData.username, formData.password);
+      const resolvedRole = await getUserRole(credential.user?.uid);
+      if (!resolvedRole || resolvedRole !== selectedRole) {
+        await logout();
+        setError('You are not authorized for this login type');
+        return;
+      }
+
+      navigate(resolvedRole === 'admin' ? '/admin/dashboard' : '/owner/dashboard', {
+        replace: true
+      });
     } catch (loginError) {
-      setPendingRoleCheck(false);
       setError('Login failed. Please check your credentials.');
+    } finally {
+      setIsValidating(false);
     }
   };
 

@@ -2,7 +2,11 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const RoleBasedRoute = ({ allowedRoles, redirectTo = '/dashboard' }) => {
-  const { role, user } = useAuth();
+  const { isReady, role, user } = useAuth();
+
+  if (!isReady) {
+    return null;
+  }
 
   if (!user) {
     return <Navigate to="/login" replace />;
