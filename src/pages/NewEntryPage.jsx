@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import PageCard from '../components/PageCard';
+import { useAuth } from '../context/AuthContext';
 import { db } from '../firebase/firebase';
 import { getCurrentIsoDate } from '../utils/date';
 
 const NewEntryPage = () => {
+  const { role } = useAuth();
   const [formData, setFormData] = useState({
     date: getCurrentIsoDate(),
     partyName: '',
@@ -34,6 +36,10 @@ const NewEntryPage = () => {
   const onSubmit = async (event) => {
     event.preventDefault();
     setStatus('');
+    if (role !== 'admin') {
+      alert('Only admin users can create new entries.');
+      return;
+    }
     setIsSaving(true);
     try {
       await addDoc(collection(db, 'entries'), {
