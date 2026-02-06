@@ -10,6 +10,13 @@ import SettingsPage from '../pages/SettingsPage';
 import LoginPage from '../pages/LoginPage';
 import ExportReportPage from '../pages/ExportReportPage';
 import EditEntryPage from '../pages/EditEntryPage';
+import { useAuth } from '../context/AuthContext';
+
+const DashboardRedirect = () => {
+  const { role } = useAuth();
+  const target = role === 'admin' ? '/admin/dashboard' : '/owner/dashboard';
+  return <Navigate to={target} replace />;
+};
 
 const AppRoutes = () => {
   return (
@@ -18,7 +25,13 @@ const AppRoutes = () => {
       <Route path="/" element={<AppLayout />}>
         <Route element={<ProtectedRoute />}>
           <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="dashboard" element={<DashboardRedirect />} />
+          <Route element={<RoleBasedRoute allowedRoles={['owner']} redirectTo="/admin/dashboard" />}>
+            <Route path="owner/dashboard" element={<DashboardPage />} />
+          </Route>
+          <Route element={<RoleBasedRoute allowedRoles={['admin']} redirectTo="/owner/dashboard" />}>
+            <Route path="admin/dashboard" element={<DashboardPage />} />
+          </Route>
           <Route path="entries" element={<EntryListPage />} />
           <Route path="entries/:entryId" element={<EntryDetailPage />} />
           <Route element={<RoleBasedRoute allowedRoles={['owner']} redirectTo="/dashboard" />}>
