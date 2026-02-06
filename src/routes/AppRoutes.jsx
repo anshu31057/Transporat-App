@@ -4,7 +4,8 @@ import ProtectedRoute from '../components/ProtectedRoute';
 import RoleBasedRoute from '../components/RoleBasedRoute';
 import DashboardPage from '../pages/DashboardPage';
 import NewEntryPage from '../pages/NewEntryPage';
-import EntriesPage from '../pages/EntriesPage';
+import EntryListPage from '../pages/EntryListPage';
+import EntryDetailPage from '../pages/EntryDetailPage';
 import SettingsPage from '../pages/SettingsPage';
 import LoginPage from '../pages/LoginPage';
 import ExportPage from '../pages/ExportPage';
@@ -18,7 +19,8 @@ const AppRoutes = () => {
         <Route element={<ProtectedRoute />}>
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="entries" element={<EntriesPage />} />
+          <Route path="entries" element={<EntryListPage />} />
+          <Route path="entries/:entryId" element={<EntryDetailPage />} />
           <Route path="export" element={<ExportPage />} />
           <Route element={<RoleBasedRoute allowedRoles={['admin']} redirectTo="/dashboard" />}>
             <Route path="new-entry" element={<NewEntryPage />} />
