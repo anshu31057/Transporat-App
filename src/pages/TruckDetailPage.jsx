@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { doc, getDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
-import { useAuth } from '../context/AuthContext';
-import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import PageCard from '../components/PageCard';
-import { db, storage } from '../firebase/firebase';
+import { useAuth } from '../context/AuthContext';
+import { db } from '../firebase/firebase';
+import { uploadToImageKit } from '../utils/uploadToImageKit';
 
 const getInsuranceStatus = (remainingDays) => {
   if (Number.isNaN(remainingDays)) {
@@ -31,8 +31,8 @@ const TruckDetailPage = () => {
   const [truck, setTruck] = useState(null);
   const [status, setStatus] = useState('loading');
   const [isSaving, setIsSaving] = useState(false);
-  const [message, setMessage] = useState('');
   const [uploadingKey, setUploadingKey] = useState('');
+  const [message, setMessage] = useState('');
   const [previewImage, setPreviewImage] = useState('');
 
   useEffect(() => {
@@ -87,12 +87,11 @@ const TruckDetailPage = () => {
     setMessage('');
     try {
       await updateDoc(doc(db, 'trucks', truckId), {
-        truckNumber: truck.truckNumber,
-        driverName: truck.driverName,
-        driverContact: truck.driverContact,
+        truckNumber: truck.truckNumber.trim(),
+        driverName: truck.driverName.trim(),
+        driverContact: (truck.driverContact || '').trim(),
         insuranceStartDate: truck.insuranceStartDate,
         insuranceExpiryDate: truck.insuranceExpiryDate,
-        otherDocuments: truck.otherDocuments,
         documents: truck.documents || {
           insuranceImageUrl: '',
           rcImageUrl: '',
@@ -117,15 +116,13 @@ const TruckDetailPage = () => {
     setUploadingKey(fieldKey);
     setMessage('');
     try {
-      const storageRef = ref(storage, `trucks/${truckId}/${fieldKey}-${Date.now()}-${file.name}`);
-      await uploadBytes(storageRef, file);
-      const downloadUrl = await getDownloadURL(storageRef);
+      const imageUrl = await uploadToImageKit(file);
 
       const updatedDocuments = {
         insuranceImageUrl: truck.documents?.insuranceImageUrl || '',
         rcImageUrl: truck.documents?.rcImageUrl || '',
         otherDocumentUrl: truck.documents?.otherDocumentUrl || '',
-        [fieldKey]: downloadUrl
+        [fieldKey]: imageUrl
       };
 
       await updateDoc(doc(db, 'trucks', truckId), {
@@ -147,10 +144,9 @@ const TruckDetailPage = () => {
     return <p className="text-base text-slate-600">Loading truck...</p>;
   }
 
- if (status === 'error') {
-  return <p className="text-base text-red-600">Unable to load truck details.</p>;
-}
-
+  if (status === 'error') {
+    return <p className="text-base text-red-600">Unable to load truck details.</p>;
+  }
 
   if (status === 'missing') {
     return <p className="text-base text-slate-600">Truck not found.</p>;
@@ -186,10 +182,6 @@ const TruckDetailPage = () => {
               <span className="font-semibold text-slate-900">
                 {Number.isNaN(remainingDays) ? '-' : remainingDays}
               </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500">Documents</span>
-              <span className="font-semibold text-slate-900">{truck.otherDocuments || '-'}</span>
             </div>
           </div>
         </div>
@@ -289,16 +281,6 @@ const TruckDetailPage = () => {
                 />
               </label>
             </div>
-            <label className="block">
-              <span className="mb-1 block text-base font-semibold">Other Documents</span>
-              <textarea
-                name="otherDocuments"
-                value={truck.otherDocuments || ''}
-                onChange={onChange}
-                rows={3}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-base"
-              />
-            </label>
             {message ? <p className="text-sm font-semibold text-emerald-700">{message}</p> : null}
             <button
               type="button"

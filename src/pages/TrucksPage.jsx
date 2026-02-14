@@ -15,8 +15,7 @@ const TrucksPage = () => {
     driverName: '',
     driverContact: '',
     insuranceStartDate: getCurrentIsoDate(),
-    insuranceExpiryDate: getCurrentIsoDate(),
-    otherDocuments: '',
+    insuranceExpiryDate: getCurrentIsoDate()
   });
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -60,12 +59,11 @@ const TrucksPage = () => {
     setIsSaving(true);
     try {
       await addDoc(collection(db, 'trucks'), {
-        truckNumber: formData.truckNumber,
-        driverName: formData.driverName,
-        driverContact: formData.driverContact,
+        truckNumber: formData.truckNumber.trim(),
+        driverName: formData.driverName.trim(),
+        driverContact: formData.driverContact.trim(),
         insuranceStartDate: formData.insuranceStartDate,
         insuranceExpiryDate: formData.insuranceExpiryDate,
-        otherDocuments: formData.otherDocuments,
         documents: {
           insuranceImageUrl: '',
           rcImageUrl: '',
@@ -80,8 +78,7 @@ const TrucksPage = () => {
         driverName: '',
         driverContact: '',
         insuranceStartDate: getCurrentIsoDate(),
-        insuranceExpiryDate: getCurrentIsoDate(),
-        otherDocuments: '',
+        insuranceExpiryDate: getCurrentIsoDate()
       });
     } catch (error) {
       setMessage('Unable to save truck. Please try again.');
@@ -156,16 +153,6 @@ const TrucksPage = () => {
                 value={Number.isNaN(remainingDays) ? '0' : remainingDays}
                 readOnly
                 className="h-12 w-full rounded-lg border border-slate-300 bg-slate-100 px-3 text-base"
-              />
-            </label>
-            <label className="block">
-              <span className="mb-1 block text-base font-semibold">Other Documents</span>
-              <textarea
-                name="otherDocuments"
-                value={formData.otherDocuments}
-                onChange={onChange}
-                rows={3}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-base"
               />
             </label>
             {message ? <p className="text-sm font-semibold text-emerald-700">{message}</p> : null}
