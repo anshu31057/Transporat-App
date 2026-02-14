@@ -1,12 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { doc, getDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
-import PageCard from '../components/PageCard';
 import { useAuth } from '../context/AuthContext';
-import { db } from '../firebase/firebase';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import PageCard from '../components/PageCard';
-import { useAuth } from '../context/AuthContext';
 import { db, storage } from '../firebase/firebase';
 
 const getInsuranceStatus = (remainingDays) => {
@@ -36,7 +33,6 @@ const TruckDetailPage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [uploadingKey, setUploadingKey] = useState('');
-  const [message, setMessage] = useState('');
   const [previewImage, setPreviewImage] = useState('');
 
   useEffect(() => {
@@ -44,7 +40,6 @@ const TruckDetailPage = () => {
       try {
         const snapshot = await getDoc(doc(db, 'trucks', truckId));
         if (snapshot.exists()) {
-          setTruck({ id: snapshot.id, ...snapshot.data() });
           const truckData = snapshot.data();
           setTruck({
             id: snapshot.id,
@@ -98,11 +93,6 @@ const TruckDetailPage = () => {
         insuranceStartDate: truck.insuranceStartDate,
         insuranceExpiryDate: truck.insuranceExpiryDate,
         otherDocuments: truck.otherDocuments,
-        truckNumber: truck.truckNumber.trim(),
-        driverName: truck.driverName.trim(),
-        driverContact: (truck.driverContact || '').trim(),
-        insuranceStartDate: truck.insuranceStartDate,
-        insuranceExpiryDate: truck.insuranceExpiryDate,
         documents: truck.documents || {
           insuranceImageUrl: '',
           rcImageUrl: '',
@@ -157,10 +147,10 @@ const TruckDetailPage = () => {
     return <p className="text-base text-slate-600">Loading truck...</p>;
   }
 
-  if (status === 'error') {
-    return <p className="text-base text-red-600">Unable to load truck.</p>;
-    return <p className="text-base text-red-600">Unable to load truck details.</p>;
-  }
+ if (status === 'error') {
+  return <p className="text-base text-red-600">Unable to load truck details.</p>;
+}
+
 
   if (status === 'missing') {
     return <p className="text-base text-slate-600">Truck not found.</p>;
