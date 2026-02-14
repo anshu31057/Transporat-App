@@ -33,6 +33,7 @@ Fields:
 - `driverContact` (string, optional)
 - `insuranceStartDate` (string, YYYY-MM-DD)
 - `insuranceExpiryDate` (string, YYYY-MM-DD)
+- `otherDocuments` (string, optional)
 - `documents` (map)
   - `insuranceImageUrl` (string)
   - `rcImageUrl` (string)
