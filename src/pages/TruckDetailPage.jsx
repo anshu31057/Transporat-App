@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { doc, getDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import PageCard from '../components/PageCard';
+import { useAuth } from '../context/AuthContext';
+import { db } from '../firebase/firebase';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import PageCard from '../components/PageCard';
 import { useAuth } from '../context/AuthContext';
@@ -31,6 +34,7 @@ const TruckDetailPage = () => {
   const [truck, setTruck] = useState(null);
   const [status, setStatus] = useState('loading');
   const [isSaving, setIsSaving] = useState(false);
+  const [message, setMessage] = useState('');
   const [uploadingKey, setUploadingKey] = useState('');
   const [message, setMessage] = useState('');
   const [previewImage, setPreviewImage] = useState('');
@@ -40,6 +44,7 @@ const TruckDetailPage = () => {
       try {
         const snapshot = await getDoc(doc(db, 'trucks', truckId));
         if (snapshot.exists()) {
+          setTruck({ id: snapshot.id, ...snapshot.data() });
           const truckData = snapshot.data();
           setTruck({
             id: snapshot.id,
@@ -87,6 +92,12 @@ const TruckDetailPage = () => {
     setMessage('');
     try {
       await updateDoc(doc(db, 'trucks', truckId), {
+        truckNumber: truck.truckNumber,
+        driverName: truck.driverName,
+        driverContact: truck.driverContact,
+        insuranceStartDate: truck.insuranceStartDate,
+        insuranceExpiryDate: truck.insuranceExpiryDate,
+        otherDocuments: truck.otherDocuments,
         truckNumber: truck.truckNumber.trim(),
         driverName: truck.driverName.trim(),
         driverContact: (truck.driverContact || '').trim(),
@@ -147,6 +158,7 @@ const TruckDetailPage = () => {
   }
 
   if (status === 'error') {
+    return <p className="text-base text-red-600">Unable to load truck.</p>;
     return <p className="text-base text-red-600">Unable to load truck details.</p>;
   }
 
@@ -184,6 +196,10 @@ const TruckDetailPage = () => {
               <span className="font-semibold text-slate-900">
                 {Number.isNaN(remainingDays) ? '-' : remainingDays}
               </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500">Documents</span>
+              <span className="font-semibold text-slate-900">{truck.otherDocuments || '-'}</span>
             </div>
           </div>
         </div>
@@ -283,6 +299,16 @@ const TruckDetailPage = () => {
                 />
               </label>
             </div>
+            <label className="block">
+              <span className="mb-1 block text-base font-semibold">Other Documents</span>
+              <textarea
+                name="otherDocuments"
+                value={truck.otherDocuments || ''}
+                onChange={onChange}
+                rows={3}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-base"
+              />
+            </label>
             {message ? <p className="text-sm font-semibold text-emerald-700">{message}</p> : null}
             <button
               type="button"
