@@ -17,6 +17,7 @@ const TrucksPage = () => {
     insuranceStartDate: getCurrentIsoDate(),
     insuranceExpiryDate: getCurrentIsoDate(),
     otherDocuments: ''
+    insuranceExpiryDate: getCurrentIsoDate()
   });
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -66,6 +67,16 @@ const TrucksPage = () => {
         insuranceStartDate: formData.insuranceStartDate,
         insuranceExpiryDate: formData.insuranceExpiryDate,
         otherDocuments: formData.otherDocuments,
+        truckNumber: formData.truckNumber.trim(),
+        driverName: formData.driverName.trim(),
+        driverContact: formData.driverContact.trim(),
+        insuranceStartDate: formData.insuranceStartDate,
+        insuranceExpiryDate: formData.insuranceExpiryDate,
+        documents: {
+          insuranceImageUrl: '',
+          rcImageUrl: '',
+          otherDocumentUrl: ''
+        },
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
@@ -77,6 +88,7 @@ const TrucksPage = () => {
         insuranceStartDate: getCurrentIsoDate(),
         insuranceExpiryDate: getCurrentIsoDate(),
         otherDocuments: ''
+        insuranceExpiryDate: getCurrentIsoDate()
       });
     } catch (error) {
       setMessage('Unable to save truck. Please try again.');

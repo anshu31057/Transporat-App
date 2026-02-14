@@ -4,6 +4,10 @@ import { doc, getDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import PageCard from '../components/PageCard';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../firebase/firebase';
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+import PageCard from '../components/PageCard';
+import { useAuth } from '../context/AuthContext';
+import { db, storage } from '../firebase/firebase';
 
 const getInsuranceStatus = (remainingDays) => {
   if (Number.isNaN(remainingDays)) {
@@ -18,6 +22,12 @@ const getInsuranceStatus = (remainingDays) => {
   return 'Valid';
 };
 
+const documentFields = [
+  { key: 'insuranceImageUrl', label: 'Insurance Image' },
+  { key: 'rcImageUrl', label: 'RC Image' },
+  { key: 'otherDocumentUrl', label: 'Other Document' }
+];
+
 const TruckDetailPage = () => {
   const { truckId } = useParams();
   const { role } = useAuth();
@@ -25,6 +35,9 @@ const TruckDetailPage = () => {
   const [status, setStatus] = useState('loading');
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const [uploadingKey, setUploadingKey] = useState('');
+  const [message, setMessage] = useState('');
+  const [previewImage, setPreviewImage] = useState('');
 
   useEffect(() => {
     const fetchTruck = async () => {
@@ -32,6 +45,16 @@ const TruckDetailPage = () => {
         const snapshot = await getDoc(doc(db, 'trucks', truckId));
         if (snapshot.exists()) {
           setTruck({ id: snapshot.id, ...snapshot.data() });
+          const truckData = snapshot.data();
+          setTruck({
+            id: snapshot.id,
+            ...truckData,
+            documents: {
+              insuranceImageUrl: truckData.documents?.insuranceImageUrl || '',
+              rcImageUrl: truckData.documents?.rcImageUrl || '',
+              otherDocumentUrl: truckData.documents?.otherDocumentUrl || ''
+            }
+          });
           setStatus('ready');
         } else {
           setStatus('missing');
@@ -75,6 +98,16 @@ const TruckDetailPage = () => {
         insuranceStartDate: truck.insuranceStartDate,
         insuranceExpiryDate: truck.insuranceExpiryDate,
         otherDocuments: truck.otherDocuments,
+        truckNumber: truck.truckNumber.trim(),
+        driverName: truck.driverName.trim(),
+        driverContact: (truck.driverContact || '').trim(),
+        insuranceStartDate: truck.insuranceStartDate,
+        insuranceExpiryDate: truck.insuranceExpiryDate,
+        documents: truck.documents || {
+          insuranceImageUrl: '',
+          rcImageUrl: '',
+          otherDocumentUrl: ''
+        },
         updatedAt: serverTimestamp()
       });
       setMessage('Truck updated.');
@@ -85,12 +118,48 @@ const TruckDetailPage = () => {
     }
   };
 
+  const onUploadDocument = async (event, fieldKey) => {
+    const file = event.target.files?.[0];
+    if (!file || role !== 'admin') {
+      return;
+    }
+
+    setUploadingKey(fieldKey);
+    setMessage('');
+    try {
+      const storageRef = ref(storage, `trucks/${truckId}/${fieldKey}-${Date.now()}-${file.name}`);
+      await uploadBytes(storageRef, file);
+      const downloadUrl = await getDownloadURL(storageRef);
+
+      const updatedDocuments = {
+        insuranceImageUrl: truck.documents?.insuranceImageUrl || '',
+        rcImageUrl: truck.documents?.rcImageUrl || '',
+        otherDocumentUrl: truck.documents?.otherDocumentUrl || '',
+        [fieldKey]: downloadUrl
+      };
+
+      await updateDoc(doc(db, 'trucks', truckId), {
+        documents: updatedDocuments,
+        updatedAt: serverTimestamp()
+      });
+
+      setTruck((prev) => ({ ...prev, documents: updatedDocuments }));
+      setMessage('Document uploaded successfully.');
+    } catch (error) {
+      setMessage('Unable to upload document. Please try again.');
+    } finally {
+      setUploadingKey('');
+      event.target.value = '';
+    }
+  };
+
   if (status === 'loading') {
     return <p className="text-base text-slate-600">Loading truck...</p>;
   }
 
   if (status === 'error') {
     return <p className="text-base text-red-600">Unable to load truck.</p>;
+    return <p className="text-base text-red-600">Unable to load truck details.</p>;
   }
 
   if (status === 'missing') {
@@ -133,6 +202,45 @@ const TruckDetailPage = () => {
               <span className="font-semibold text-slate-900">{truck.otherDocuments || '-'}</span>
             </div>
           </div>
+        </div>
+      </PageCard>
+
+      <PageCard title="Documents">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {documentFields.map((documentField) => {
+            const imageUrl = truck.documents?.[documentField.key] || '';
+            const isUploading = uploadingKey === documentField.key;
+            return (
+              <div key={documentField.key} className="space-y-2 rounded-lg border border-slate-200 p-3">
+                <p className="text-sm font-semibold text-slate-700">{documentField.label}</p>
+                {imageUrl ? (
+                  <button
+                    type="button"
+                    onClick={() => setPreviewImage(imageUrl)}
+                    className="block w-full overflow-hidden rounded-lg border border-slate-200"
+                  >
+                    <img src={imageUrl} alt={documentField.label} className="h-32 w-full object-cover" />
+                  </button>
+                ) : (
+                  <div className="flex h-32 items-center justify-center rounded-lg border border-dashed border-slate-300 text-sm text-slate-500">
+                    No image uploaded
+                  </div>
+                )}
+                {role === 'admin' ? (
+                  <label className="inline-flex h-10 w-full cursor-pointer items-center justify-center rounded-lg border border-blue-700 text-sm font-semibold text-blue-700">
+                    {isUploading ? 'Uploading...' : 'Upload Image'}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(event) => onUploadDocument(event, documentField.key)}
+                      className="hidden"
+                      disabled={isUploading}
+                    />
+                  </label>
+                ) : null}
+              </div>
+            );
+          })}
         </div>
       </PageCard>
 
@@ -212,6 +320,21 @@ const TruckDetailPage = () => {
             </button>
           </div>
         </PageCard>
+      ) : null}
+
+      {previewImage ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-md overflow-hidden rounded-xl bg-white">
+            <img src={previewImage} alt="Truck document" className="max-h-[70vh] w-full object-contain" />
+            <button
+              type="button"
+              onClick={() => setPreviewImage('')}
+              className="h-12 w-full border-t border-slate-200 text-base font-semibold text-slate-700"
+            >
+              Close
+            </button>
+          </div>
+        </div>
       ) : null}
 
       <Link
